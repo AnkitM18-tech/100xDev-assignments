@@ -39,11 +39,147 @@
 
   Testing the server - run `npm run test-todoServer` command in terminal
  */
-  const express = require('express');
-  const bodyParser = require('body-parser');
-  
-  const app = express();
-  
-  app.use(bodyParser.json());
-  
-  module.exports = app;
+const express = require("express");
+const bodyParser = require("body-parser");
+const fs = require("fs");
+const path = require("path");
+
+const app = express();
+
+app.use(bodyParser.json());
+
+function findIndex(arr, id) {
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i].id === id) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function removeAtIndex(arr, index) {
+  let newArray = [];
+  for (let i = 0; i < arr.length; i++) {
+    if (i !== index) newArray.push(arr[i]);
+  }
+  return newArray;
+}
+
+let todos = [];
+
+app.get("/todos", (req, res) => {
+  /* fs.readFile(path.join(__dirname, "./todos.json"), "utf-8", (err, data) => {
+    if (err) throw err;
+    res.json(JSON.parse(data));
+  }); */
+  res.json(todos);
+});
+
+app.get("/todos/:id", (req, res) => {
+  /* fs.readFile(path.join(__dirname, "./todos.json"), "utf-8", (err, data) => {
+    if (err) throw err;
+    const todos = JSON.parse(data);
+    const index = findIndex(todos, parseInt(req.params.id));
+    if (index === -1) {
+      res.status(404).send();
+    } else {
+      res.status(200).json(todos[index]);
+    }
+  }); */
+  const todoId = todos.findIndex((todo) => todo.id === parseInt(req.params.id));
+  if (todoId === -1) {
+    return res.status(404).send("Not Found");
+  }
+  res.status(200).json(todos[todoId]);
+});
+
+app.post("/todos", (req, res) => {
+  let id = Math.floor(Math.random() * 1000000);
+  const newTodo = {
+    id: id,
+    title: req.body.title,
+    description: req.body.description,
+  };
+  todos.push(newTodo);
+  /* fs.readFile(path.join(__dirname, "./todos.json"), "utf-8", (err, data) => {
+    if (err) throw err;
+    let todos = JSON.parse(data);
+    todos.push(newTodo);
+    fs.writeFile(
+      path.join(__dirname, "./todos.json"),
+      JSON.stringify(todos),
+      (err) => {
+        if (err) throw err;
+        res.status(201).json(newTodo);
+      }
+    );
+  }); */
+  res.status(201).json(newTodo);
+});
+
+app.put("/todos/:id", (req, res) => {
+  /* fs.readFile(path.join(__dirname, "./todos.json"), "utf-8", (err, data) => {
+    if (err) throw err;
+    let todos = JSON.parse(data);
+    let todoIndex = findIndex(todos, parseInt(req.params.id));
+    if (todoIndex === -1) {
+      return res.status(404).send("Not Found");
+    } else {
+      const updatedTodo = {
+        id: todos[todoIndex].id,
+        title: req.body.title,
+        description: req.body.description,
+      };
+      todos[todoIndex] = updatedTodo;
+      fs.writeFile(
+        path.join(__dirname, "./todos.json"),
+        JSON.stringify(todos),
+        (err) => {
+          if (err) throw err;
+          res.status(200).json(updatedTodo);
+        }
+      );
+    }
+  }); */
+  const todoId = todos.findIndex((todo) => todo.id === parseInt(req.params.id));
+  if (todoId === -1) {
+    return res.status(404).send("Not Found");
+  }
+  todos[todoId].title = req.body.title;
+  todos[todoId].description = req.body.description;
+  todos[todoId].completed = req.body.completed;
+  res.status(200).json(todos[todoId]);
+});
+
+app.delete("/todos/:id", (req, res) => {
+  /* fs.readFile(path.join(__dirname, "./todos.json"), "utf-8", (err, data) => {
+    if (err) throw err;
+    let todos = JSON.parse(data);
+    let todoIndex = findIndex(todos, parseInt(req.params.id));
+    if (todoIndex === -1) {
+      return res.status(404).send("Not Found");
+    } else {
+      todos = removeAtIndex(todos, todoIndex);
+      fs.writeFile(
+        path.join(__dirname, "./todos.json"),
+        JSON.stringify(todos),
+        (err) => {
+          if (err) throw err;
+          res.status(200).json(todos);
+        }
+      );
+    }
+  }); */
+  const todoId = todos.findIndex((todo) => todo.id === parseInt(req.params.id));
+  if (todoId === -1) {
+    return res.status(404).send("Not Found");
+  }
+  todos.splice(todoId, 1);
+  res.status(200).json(todos);
+});
+
+app.use((req, res, next) => {
+  res.status(404).send("Route not found");
+});
+
+module.exports = app;
